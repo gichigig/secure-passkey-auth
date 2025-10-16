@@ -74,12 +74,51 @@ export default function Settings() {
 
     setLoading(true);
     try {
-      // In a real implementation, this would use the WebAuthn API
-      // For demo purposes, we'll create a mock passkey
+      // Create WebAuthn credential
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
+        challenge,
+        rp: {
+          name: 'Secure Auth App',
+          id: window.location.hostname,
+        },
+        user: {
+          id: new TextEncoder().encode(user.id),
+          name: user.email || '',
+          displayName: user.email || '',
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: 'public-key' },  // ES256
+          { alg: -257, type: 'public-key' }, // RS256
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+          requireResidentKey: false,
+        },
+        timeout: 60000,
+        attestation: 'none',
+      };
+
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions,
+      }) as PublicKeyCredential;
+
+      if (!credential) {
+        throw new Error('Failed to create credential');
+      }
+
+      // Store the credential in the database
+      const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      const response = credential.response as AuthenticatorAttestationResponse;
+      const publicKey = btoa(String.fromCharCode(...new Uint8Array(response.getPublicKey()!)));
+
       const { error } = await supabase.from('user_passkeys').insert({
         user_id: user.id,
-        credential_id: crypto.randomUUID(),
-        public_key: 'mock_public_key',
+        credential_id: credentialId,
+        public_key: publicKey,
         device_name: passkeyName,
       });
 
@@ -89,7 +128,13 @@ export default function Settings() {
       setPasskeyName('');
       loadSettings();
     } catch (error: any) {
-      toast.error('Failed to add passkey');
+      if (error.name === 'NotAllowedError') {
+        toast.error('Passkey registration was cancelled');
+      } else if (error.name === 'NotSupportedError') {
+        toast.error('Passkeys are not supported on this device');
+      } else {
+        toast.error('Failed to add passkey: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
