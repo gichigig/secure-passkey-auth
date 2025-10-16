@@ -74,6 +74,11 @@ export default function Settings() {
 
     setLoading(true);
     try {
+      // Check if WebAuthn is supported
+      if (!window.PublicKeyCredential) {
+        throw new Error('WebAuthn is not supported on this browser');
+      }
+
       // Create WebAuthn credential
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
@@ -82,7 +87,6 @@ export default function Settings() {
         challenge,
         rp: {
           name: 'Secure Auth App',
-          id: window.location.hostname,
         },
         user: {
           id: new TextEncoder().encode(user.id),
@@ -95,8 +99,7 @@ export default function Settings() {
         ],
         authenticatorSelection: {
           authenticatorAttachment: 'platform',
-          userVerification: 'required',
-          requireResidentKey: false,
+          userVerification: 'preferred',
         },
         timeout: 60000,
         attestation: 'none',
@@ -128,10 +131,13 @@ export default function Settings() {
       setPasskeyName('');
       loadSettings();
     } catch (error: any) {
+      console.error('Passkey registration error:', error);
       if (error.name === 'NotAllowedError') {
-        toast.error('Passkey registration was cancelled');
+        toast.error('Passkey registration was cancelled or not allowed');
       } else if (error.name === 'NotSupportedError') {
         toast.error('Passkeys are not supported on this device');
+      } else if (error.name === 'InvalidStateError') {
+        toast.error('This authenticator is already registered');
       } else {
         toast.error('Failed to add passkey: ' + error.message);
       }
