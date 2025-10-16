@@ -72,6 +72,12 @@ export default function Settings() {
       return;
     }
 
+    // Check if running in iframe (preview environment)
+    if (window.self !== window.top) {
+      toast.error('Passkeys cannot be registered in preview mode. Please deploy your app or open it directly in a new tab to use this feature.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Check if WebAuthn is supported
