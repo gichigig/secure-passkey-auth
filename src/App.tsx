@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Setup2FA from "./pages/auth/Setup2FA";
+import Choose2FA from "./pages/auth/Choose2FA";
 import Verify2FA from "./pages/auth/Verify2FA";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
@@ -24,10 +25,11 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/signup" element={<Signup />} />
-            <Route path="/auth/setup-2fa" element={<Setup2FA />} />
-            <Route path="/auth/verify-2fa" element={<Verify2FA />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/signup" element={<Signup />} />
+          <Route path="/auth/setup-2fa" element={<Setup2FA />} />
+          <Route path="/auth/choose-2fa" element={<Choose2FA />} />
+          <Route path="/auth/verify-2fa" element={<Verify2FA />} />
             <Route
               path="/dashboard"
               element={

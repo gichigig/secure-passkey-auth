@@ -35,7 +35,7 @@ export default function Login() {
           .single();
 
         if (twoFAData?.enabled) {
-          navigate('/auth/verify-2fa', { state: { userId: data.user.id } });
+          navigate('/auth/choose-2fa', { state: { userId: data.user.id } });
         } else {
           toast.success('Logged in successfully');
           navigate('/dashboard');
